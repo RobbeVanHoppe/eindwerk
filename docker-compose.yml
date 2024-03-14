@@ -8,6 +8,16 @@ services:
       - /home/robbe/qcify/test_dashboard/pytest_example_data/test_results:/app/test_results
     entrypoint: ./build.sh
 
+  pytest-exporter:
+    image: pytest-exporter:0.0.1
+    build: pytest_exporter
+    ports:
+      - 8000:8000
+    volumes:
+      - /home/robbe/qcify/test_dashboard/pytest_example_data/test_results:/app/test_results
+    networks:
+      - testdata
+
   prometheus:
     image: prom/prometheus
     command: 
