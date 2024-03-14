@@ -1,0 +1,10 @@
+version: '3'
+
+services:
+  pytest-example-data:
+    image: pytest-example-data:0.0.1
+    build: pytest_example_data
+    volumes:
+      - /home/robbe/qcify/test_dashboard/pytest_example_data/test_results:/app/test_results
+    entrypoint: ./build.sh
+
