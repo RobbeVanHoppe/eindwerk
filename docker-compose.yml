@@ -1,20 +1,14 @@
 version: '3'
 
 services:
-  pytest-example-data:
-    image: pytest-example-data:0.0.1
-    build: pytest_example_data
-    volumes:
-      - /home/robbe/qcify/test_dashboard/pytest_example_data/test_results:/app/test_results
-    entrypoint: ./build.sh
-
   pytest-exporter:
     image: pytest-exporter:0.0.1
     build: pytest_exporter
     ports:
       - 8000:8000
     volumes:
-      - /home/robbe/qcify/test_dashboard/pytest_example_data/test_results:/app/test_results
+      - /home/robbe/qcify/OBS_All/cmake-build-debug-docker/pytest_unit_test_results:/app/pytest_test_results
+      - /home/robbe/qcify/OBS_All/cmake-build-debug-docker/system_test_results:/app/system_test_results
     networks:
       - testdata
 
