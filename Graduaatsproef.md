@@ -10,6 +10,7 @@
       - [Azure](#azure)
       - [Prometheus/Grafana:](#prometheusgrafana)
       - [ReportPortal:](#reportportal)
+      - [Zebrunner](#zebrunner)
   - [Bronnen](#bronnen)
 
 ##  Taken
@@ -40,12 +41,16 @@ De hele stack bestaat uit een dashboard, een database, authenticatie, rabbitmq e
 https://reportportal.io/docs/log-data-in-reportportal/ImportDataToReportPortal#import-via-api
 
 
+#### Zebrunner
+Configuratie gaat via YAML bestandjes.
+
 ## Bronnen
 
 [Grafana docs](#https://grafana.com/docs/grafana/latest/)
 
 [ReportPortal docs](#https://reportportal.io/docs/)
 
+[Zebrunner docs](#https://zebrunner.com/documentation/)
 
 [Automated Test Results: how to track and visualize them](#https://www.solvd.com/blog/automated-test-results-visualization)
 
