@@ -1,0 +1,23 @@
+- name: Deploy ReportPortal Stack
+  hosts: localhost
+  become: false
+  tasks:
+    - name: Ensure Docker Compose is installed
+      command: docker-compose --version
+      register: docker_compose_version
+      ignore_errors: true
+      failed_when: docker_compose_version.rc != 0
+    - name: Install Docker Compose
+      pip:
+        name: docker-compose
+        state: latest
+
+    - name: Pull ReportPortal Docker Images
+      command: docker-compose -f docker-compose.yml pull
+      args:
+        chdir: ./reportportal
+
+    - name: Start ReportPortal Stack
+      command: docker-compose -f docker-compose.yml up -d
+      args:
+        chdir: ./reportportal

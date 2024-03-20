@@ -37,7 +37,7 @@ Deze opslag wordt dan gebruikt door prometheus om de resultaten in een database 
 
 #### ReportPortal:
 Complex en groot, maar doet wel wat we we er van vragen.
-Dit is een docker-compose stack die speciaal gemaakt is voor het visualiseren van test resultaten. 
+Dit is een docker-compose stack die speciaal gemaakt is voor het visualiseren van test resultaten.
 De hele stack bestaat uit een dashboard, een database, authenticatie, rabbitmq en verschillende services voor health en metrics te bekijken.
 
 https://reportportal.io/docs/log-data-in-reportportal/ImportDataToReportPortal#import-via-api
