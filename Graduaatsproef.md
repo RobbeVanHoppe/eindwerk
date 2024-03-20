@@ -8,12 +8,12 @@
   - [Research](#research)
     - [Welke opties zijn er?](#welke-opties-zijn-er)
       - [Azure](#azure)
-      - [Prometheus/grafana:](#prometheusgrafana)
+      - [Prometheus/Grafana:](#prometheusgrafana)
       - [ReportPortal:](#reportportal)
   - [Bronnen](#bronnen)
 
 ##  Taken
- - [ ] 3 - 4 Opties verzamelen
+ - [x] 3 - 4 Opties verzamelen
  - [ ] POC maken per tool
  - [ ] Screenshots invoegen
  - [ ] Pros & cons beschrijven
@@ -25,7 +25,7 @@
 #### Azure
 Vendor lockin en weinig tot geen customization. 
 
-#### Prometheus/grafana:
+#### Prometheus/Grafana:
 Dient eerder voor logs en constante data op te slaan, de resultaten moeten als XML worden opgeslagen en worden uitgelezen. 
 De werking is vrij simpel, het meeste werkt out of the box, er moet enkel een script worden geschreven. 
 Dit script gaat na het beeindigen van een testrun de resultaten uploaden naar een cloud opslag. 
@@ -48,3 +48,5 @@ https://reportportal.io/docs/log-data-in-reportportal/ImportDataToReportPortal#i
 
 
 [Automated Test Results: how to track and visualize them](#https://www.solvd.com/blog/automated-test-results-visualization)
+
+[Core Definitions](#https://zebrunner.com/documentation/guide/)
