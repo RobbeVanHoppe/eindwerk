@@ -39,9 +39,9 @@ Deze opslag wordt dan gebruikt door prometheus om de resultaten in een database 
 Complex en groot, maar doet wel wat we we er van vragen.
 Dit is een docker-compose stack die speciaal gemaakt is voor het visualiseren van test resultaten.
 De hele stack bestaat uit een dashboard, een database, authenticatie, rabbitmq en verschillende services voor health en metrics te bekijken.
+Bij het instellen van het portaal, msit er informatie uit de documentatie en is reportportal helaas geen optie om te gebruiken in onze opstelling.
 
-https://reportportal.io/docs/log-data-in-reportportal/ImportDataToReportPortal#import-via-api
-
+https://reportportal.io/docs/dev-guides/ReportingDevelopersGuide
 
 #### Zebrunner
 Configuratie gaat via bash script. Provisoning is niet echt ondersteund. Dit zouden we moeten doen door dingen in de database aan te passen. Ook geeft de community edition weinig opties in vergelijking met andere platformen. (geen integratie met Azure/Ctest en het python unittest famework). Wel een user interface die overzichtelijk is en minimalistisch.
