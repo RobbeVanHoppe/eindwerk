@@ -42,7 +42,8 @@ https://reportportal.io/docs/log-data-in-reportportal/ImportDataToReportPortal#i
 
 
 #### Zebrunner
-Configuratie gaat via YAML bestandjes.
+Configuratie gaat via bash script. hoe werkt provisioning?
+
 
 ## Bronnen
 

@@ -1,5 +1,10 @@
 import pytest
+import logging
+from pytest_zebrunner.zebrunner_logging import ZebrunnerHandler
 
+
+logger = logging.getLogger(__name__) # It might be any logger that you created earlier
+logger.addHandler(ZebrunnerHandler())
 
 def test_should_success():
     assert 1
