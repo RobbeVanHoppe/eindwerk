@@ -3,13 +3,8 @@ reporting:
   project-key: DEF
   send-logs: true
   server:
-    hostname: localhost:8080
-    access-token: UNYJzMIPPn5Fh8PXWmOtGB1KuUYPjhCg3Mnek7fthDL4DaLawb
-  notification:
-    notify-on-each-failure: true
-    slack-channels: automation, dev-team
-    ms-teams-channels: automation, qa-team
-    emails: example@example.com
+    hostname: http://localhost:6969
+    access-token: ONmtYmg1BvCVf8HqqjyQtXMP0QXNo1fkEFkV7VZc0VkhCite32
   run:
     treat_skips_as_failures: false
     display-name: Nightly Regression Suite
