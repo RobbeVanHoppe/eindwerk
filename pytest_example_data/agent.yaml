@@ -4,7 +4,7 @@ reporting:
   send-logs: true
   server:
     hostname: http://localhost:6969
-    access-token: ONmtYmg1BvCVf8HqqjyQtXMP0QXNo1fkEFkV7VZc0VkhCite32
+    access-token: WcR8jFQChHG1mhGGh8tPjndTHhF1xHpjlEsgCCqENpmvBZ91wq
   run:
     treat_skips_as_failures: false
     display-name: Nightly Regression Suite

@@ -1,4 +1,10 @@
 import pytest
+import logging
+from pytest_zebrunner.zebrunner_logging import ZebrunnerHandler
+
+
+logger = logging.getLogger(__name__)
+logger.addHandler(ZebrunnerHandler())
 
 def function_to_test(x: int) -> int:
     return x + 5

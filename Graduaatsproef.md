@@ -11,6 +11,8 @@
       - [Prometheus/Grafana:](#prometheusgrafana)
       - [ReportPortal:](#reportportal)
       - [Zebrunner](#zebrunner)
+      - [integraties](#integraties)
+      - [Basic Dashboard](#basic-dashboard)
   - [Bronnen](#bronnen)
 
 ##  Taken
@@ -42,7 +44,15 @@ https://reportportal.io/docs/log-data-in-reportportal/ImportDataToReportPortal#i
 
 
 #### Zebrunner
-Configuratie gaat via bash script. hoe werkt provisioning?
+Configuratie gaat via bash script. Provisoning is niet echt ondersteund. Dit zouden we moeten doen door dingen in de database aan te passen. Ook geeft de community edition weinig opties in vergelijking met andere platformen. (geen integratie met Azure/Ctest en het python unittest famework). Wel een user interface die overzichtelijk is en minimalistisch.
+
+#### integraties
+
+<img src="img/zebrunner_integrations.png">
+
+#### Basic Dashboard
+
+<img src="img/zebrunner_dashboard.png">
 
 
 ## Bronnen
