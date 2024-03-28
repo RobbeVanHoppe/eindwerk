@@ -10,10 +10,13 @@
       - [Azure](#azure)
       - [Prometheus/Grafana:](#prometheusgrafana)
       - [ReportPortal:](#reportportal)
+        - [Example Dashboard](#example-dashboard)
+      - [Stack\_Trace\_Example](#stack_trace_example)
       - [Zebrunner](#zebrunner)
       - [integraties](#integraties)
       - [Basic Dashboard](#basic-dashboard)
   - [Bronnen](#bronnen)
+
 
 ##  Taken
  - [x] 3 - 4 Opties verzamelen
@@ -39,9 +42,18 @@ Deze opslag wordt dan gebruikt door prometheus om de resultaten in een database 
 Complex en groot, maar doet wel wat we we er van vragen.
 Dit is een docker-compose stack die speciaal gemaakt is voor het visualiseren van test resultaten.
 De hele stack bestaat uit een dashboard, een database, authenticatie, rabbitmq en verschillende services voor health en metrics te bekijken.
-Bij het instellen van het portaal, msit er informatie uit de documentatie en is reportportal helaas geen optie om te gebruiken in onze opstelling.
+Bij het instellen van het portaal, is er foutieve informatie in de documentatie en moeten we reportportal op een andere manier configureren.
+Er wordt ook een stack trace gegeven bij de teesten die falen [Zie foto](#Stack_Trace_Example)
 
-https://reportportal.io/docs/dev-guides/ReportingDevelopersGuide
+##### Example Dashboard
+
+<img src="img/reportportal_dashboard.png">
+
+#### Stack_Trace_Example
+
+<img src="img/reportportal_stack_trace.png">
+
+// https://reportportal.io/docs/dev-guides/ReportingDevelopersGuide
 
 #### Zebrunner
 Configuratie gaat via bash script. Provisoning is niet echt ondersteund. Dit zouden we moeten doen door dingen in de database aan te passen. Ook geeft de community edition weinig opties in vergelijking met andere platformen. (geen integratie met Azure/Ctest en het python unittest famework). Wel een user interface die overzichtelijk is en minimalistisch.
