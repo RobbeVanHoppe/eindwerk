@@ -61,6 +61,7 @@ class SetupReportPortal:
         print(subprocess.run(['scp', '-r', src_file, f'{self._remote_user}@{self._remote_host}:{dst_file}']))
 
 
+
 if __name__ == '__main__':
     setup = SetupReportPortal()
 
@@ -93,6 +94,15 @@ if __name__ == '__main__':
         post_install_command = "sudo usermod -aG docker $USER"
         print(setup.execute_ssh_command(post_install_command))
 
+    def step_3_pull_report_portal_image():
+        print(setup.execute_ssh_command(f'docker compose -f {setup.remote_home}/reportportal/provisioning/docker-compose.yml pull'))
+
+
+    def step_4_start_report_portal_stack():
+        print(setup.execute_ssh_command(f'docker compose -f {setup.remote_home}/reportportal/provisioning/docker-compose.yml up -d'))
+
 
     step_1_copy_required_files()
     step_2_install_docker_compose()
+    step_3_pull_report_portal_image()
+    step_4_start_report_portal_stack()
