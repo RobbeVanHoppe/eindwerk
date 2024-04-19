@@ -1,15 +1,18 @@
+import asyncio
 import getpass
+import json
 import os
 import subprocess
-from typing import List
+from typing import List, Optional, Union
 
 import paramiko
+import requests
 
 
 class SetupReportPortal:
     def __init__(self, remote_host_ip: str = None):
         self._ssh_client = None
-        self._remote_host = '10.10.0.8' if remote_host_ip is None else remote_host_ip
+        self._remote_host = '192.168.116.108' if remote_host_ip is None else remote_host_ip
         self._remote_user = 'qcify'
         self._remote_password = 'Qc1fyT3st'
         self.remote_home = f'/home/{self._remote_user}'
@@ -30,16 +33,24 @@ class SetupReportPortal:
     def _close_client(self):
         self._ssh_client.close()
 
+    async def _retrieve_api_key(self) -> str:
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+        data = {"grant_type": "password",
+                "username": "superadmin",
+                "password": "erebus"}
+        auth = ("ui", "uiman")
+        result = setup.create_api_call('POST', '/uat/sso/oauth/token', headers=headers, data=data, auth=auth)
+        return result.json().get('access_token')
+
     def execute_ssh_command(self, command: str, user: str = None, password: str = None) -> str:
         self._create_client(user=user, password=password)
         full_cmd = command
 
         if command.startswith("sudo"):
             # Prompt for password securely
-            # sudo_password = getpass.getpass(prompt="Enter sudo password: ")
-            sudo_password = self._remote_password
+            self._remote_password = getpass.getpass(prompt="Enter remote sudo password: ")
             # Add -S option to sudo command and pass the password through stdin
-            full_cmd = f'echo "{sudo_password}" | sudo -S {command}'
+            full_cmd = f'echo "{self._remote_password}" | sudo -S {command}'
 
         stdin, stdout, stderr = self._ssh_client.exec_command(full_cmd)
         exit_status: int = stdout.channel.recv_exit_status()
@@ -60,21 +71,20 @@ class SetupReportPortal:
     def copy_file(self, src_file: str, dst_file: str):
         print(subprocess.run(['scp', '-r', src_file, f'{self._remote_user}@{self._remote_host}:{dst_file}']))
 
+    def create_api_call(self, method: str, url: str, headers: dict[str, str], data: Union[str, dict[str, str]], auth: tuple[str, str] = None) -> Optional[requests.Response]:
+        if method == 'POST':
+            return requests.post(url=f'http://{self._remote_host}:8080{url}', headers=headers, data=data, auth=auth)
+        if method == 'PUT':
+            return requests.put(url=f'http://{self._remote_host}:8080{url}', headers=headers, data=data, auth=auth)
 
-
-if __name__ == '__main__':
-    setup = SetupReportPortal()
-
-
-    def step_1_copy_required_files():
+    def step_1_copy_required_files(self):
         """
         Copy files and SSH key.
         """
         setup.copy_folder(setup.host_reportportal_dir, setup.remote_home)
         setup.copy_file(setup.host_rsa_pub_key, f'{setup.remote_home}/.ssh/authorized_keys')
 
-
-    def step_2_install_docker_compose():
+    def step_2_install_docker_compose(self):
         """
         First log in as root user and install docker compose
         """
@@ -94,15 +104,57 @@ if __name__ == '__main__':
         post_install_command = "sudo usermod -aG docker $USER"
         print(setup.execute_ssh_command(post_install_command))
 
-    def step_3_pull_report_portal_image():
+    def step_3_pull_report_portal_image(self):
         print(setup.execute_ssh_command(f'docker compose -f {setup.remote_home}/reportportal/provisioning/docker-compose.yml pull'))
 
-
-    def step_4_start_report_portal_stack():
+    def step_4_start_report_portal_stack(self):
         print(setup.execute_ssh_command(f'docker compose -f {setup.remote_home}/reportportal/provisioning/docker-compose.yml up -d'))
 
+    async def step_5_create_OBS_test_project(self):
+        headers = {"Content-Type": "application/json",
+                   "Authorization": f"Bearer {await self._retrieve_api_key()}"}
+        data = {
+            "entryType": "INTERNAL",
+            "projectName": "OBS_test"
+        }
+        result = setup.create_api_call('POST', '/api/v1/project', headers=headers, data=json.dumps(data))
+        print(result)
 
-    step_1_copy_required_files()
-    step_2_install_docker_compose()
-    step_3_pull_report_portal_image()
-    step_4_start_report_portal_stack()
+    async def step_6_create_qcify_user(self):
+        headers = {"Content-Type": "application/json",
+                   "Authorization": f"Bearer {await self._retrieve_api_key()}"}
+        data = {"accountRole": "USER",
+                "defaultProject": "OBS_test",
+                "email": "rvanhoppe@qcify.com",
+                "fullName": "qcify",
+                "login": "qcify",
+                "password": "qcify",
+                "projectRole": "PROJECT MANAGER"}
+
+        result = setup.create_api_call('POST', '/api/users', headers=headers, data=json.dumps(data))
+
+        print(result)
+
+    async def step_7_assign_user_to_project(self):
+        headers = {"Content-Type": "application/json",
+                   "Authorization": f"Bearer {await self._retrieve_api_key()}"}
+        data = {"userNames": {"qcify": "PROJECT_MANAGER"}}
+
+        result = setup.create_api_call('PUT', '/api/v1/project/OBS_test/assign', headers=headers, data=json.dumps(data))
+
+        print(result)
+
+    async def main(self):
+        self.step_1_copy_required_files()
+        self.step_2_install_docker_compose()
+        self.step_3_pull_report_portal_image()
+        self.step_4_start_report_portal_stack()
+        await self.step_5_create_OBS_test_project()
+        await self.step_6_create_qcify_user()
+        await self.step_7_assign_user_to_project()
+
+
+if __name__ == '__main__':
+    loop = asyncio.get_event_loop()
+    setup = SetupReportPortal()
+    loop.run_until_complete(setup.main())
