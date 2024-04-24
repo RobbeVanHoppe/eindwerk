@@ -3,37 +3,34 @@ import getpass
 import json
 import os
 import subprocess
+from asyncio import sleep
 from typing import List, Optional, Union
 
 import paramiko
 import requests
 
 
+async def _retrieve_api_key() -> str:
+    headers = {"Content-Type": "application/x-www-form-urlencoded"}
+    data = {"grant_type": "password",
+            "username": "superadmin",
+            "password": "erebus"}
+    auth = ("ui", "uiman")
+    result = setup.create_api_call('POST', '/uat/sso/oauth/token', headers=headers, data=data, auth=auth)
+    return result.json().get('access_token')
+
+
 class SetupReportPortal:
     """
-    Represents a setup for interacting with ReportPortal.
-
-    Methods:
-        __init__: Initialize the setup with optional remote host IP.
-        _create_client: Create an SSH client for the remote host.
-        _close_client: Close the SSH client connection.
-        _retrieve_api_key: Retrieve the API key for authentication.
-        execute_ssh_command: Execute an SSH command on the remote host.
-        copy_folder: Copy a folder to the remote host.
-        copy_file: Copy a file to the remote host.
-        create_api_call: Make an API call to the remote host.
-        step_1_copy_required_files: Copy required files and SSH key.
-        step_2_install_docker_compose: Install Docker Compose.
-        step_3_pull_report_portal_image: Pull the ReportPortal Docker image.
-        step_4_start_report_portal_stack: Start the ReportPortal stack.
-        step_5_create_OBS_test_project: Create a test project.
-        step_6_create_qcify_user: Create a user for QCify.
-        step_7_assign_user_to_project: Assign a user to a project.
-        main: Execute the setup steps in sequence.
+    Represents an automated basic setup for interacting with ReportPortal.
+    It does the Docker setup on a fresh Ubuntu server, then installs reportportal.
+    After installation, we provision reportportal with a qcify user and OBS_Test dashboard.
     """
 
-    
     def __init__(self, remote_host_ip: Optional[str] = None):
+        self._widget_ids: List[int] = []
+        self._OBS_DashBoard_id: Optional[str] = None
+        self._OBS_Test_project_name: str = "OBS_Test"
         self._ssh_client: Optional[paramiko.SSHClient] = None
         self._remote_host = '10.10.0.10' if remote_host_ip is None else remote_host_ip
         self._remote_user = 'qcify'
@@ -54,16 +51,7 @@ class SetupReportPortal:
             self._ssh_client.connect(hostname=self._remote_host, username=self._remote_user, key_filename=self.host_rsa_priv_key)
 
     def _close_client(self):
-        self._ssh_client.close() # type: ignore
-
-    async def _retrieve_api_key(self) -> str:
-        headers = {"Content-Type": "application/x-www-form-urlencoded"}
-        data = {"grant_type": "password",
-                "username": "superadmin",
-                "password": "erebus"}
-        auth = ("ui", "uiman")
-        result = setup.create_api_call('POST', '/uat/sso/oauth/token', headers=headers, data=data, auth=auth)
-        return result.json().get('access_token')
+        self._ssh_client.close()  # type: ignore
 
     def execute_ssh_command(self, command: str, user: Optional[str] = None, password: Optional[str] = None) -> str:
         self._create_client(user=user, password=password)
@@ -74,7 +62,7 @@ class SetupReportPortal:
             # Add -S option to sudo command and pass the password through stdin
             full_cmd = f'echo "{self._remote_password}" | sudo -S {command}'
 
-        stdin, stdout, stderr = self._ssh_client.exec_command(full_cmd) # type: ignore
+        stdin, stdout, stderr = self._ssh_client.exec_command(full_cmd)  # type: ignore
         exit_status: int = stdout.channel.recv_exit_status()
         output: str = stdout.read().decode('utf-8')
         error: str = stderr.read().decode('utf-8')
@@ -97,7 +85,13 @@ class SetupReportPortal:
     def copy_file(self, src_file: str, dst_file: str):
         print(subprocess.run(['scp', '-r', src_file, f'{self._remote_user}@{self._remote_host}:{dst_file}']))
 
-    def create_api_call(self, method: str, url: str, headers: dict[str, str], data: Union[str, dict[str, str]], auth: Optional[tuple[str, str]] = None) -> requests.Response:
+    def create_api_call(self, method: str,
+                        url: str,
+                        headers: Optional[dict[str, str]] = None,
+                        data: Optional[Union[str, dict[str, str]]] = None,
+                        auth: Optional[tuple[str, str]] = None) -> requests.Response:
+        if method == 'GET':
+            return requests.get(url=f'http://{self._remote_host}:8080{url}', headers=headers)
         if method == 'POST':
             return requests.post(url=f'http://{self._remote_host}:8080{url}', headers=headers, data=data, auth=auth)
         if method == 'PUT':
@@ -137,38 +131,89 @@ class SetupReportPortal:
     def step_4_start_report_portal_stack(self):
         print(setup.execute_ssh_command(f'docker compose -f {setup.remote_home}/reportportal/provisioning/docker-compose.yml up -d'))
 
-    async def step_5_create_OBS_test_project(self):
+    async def step_5_wait_for_stack_to_be_online(self):
+        while setup.create_api_call('GET', '/api/v1/settings').status_code != 400:
+            print("Waiting for stack to be ready")
+            await sleep(5)
+
+    async def step_6_create_OBS_test_project(self):
         headers = {"Content-Type": "application/json",
-                   "Authorization": f"Bearer {await self._retrieve_api_key()}"}
+                   "Authorization": f"Bearer {await _retrieve_api_key()}"}
         data = {
             "entryType": "INTERNAL",
-            "projectName": "OBS_test"
+            "projectName": f"{self._OBS_Test_project_name}"
         }
         result = setup.create_api_call('POST', '/api/v1/project', headers=headers, data=json.dumps(data))
         print(result.content)
 
-    async def step_6_create_qcify_user(self):
+    async def step_7_create_qcify_user(self):
         headers = {"Content-Type": "application/json",
-                   "Authorization": f"Bearer {await self._retrieve_api_key()}"}
-        data = {"accountRole": "USER",
-                "defaultProject": "OBS_test",
-                "email": "rvanhoppe@qcify.com",
-                "fullName": "qcify",
-                "login": "qcify",
-                "password": "qcify",
-                "projectRole": "PROJECT_MANAGER"}
+                   "Authorization": f"Bearer {await _retrieve_api_key()}"}
+        with open('provisioning/users/qcify_user.json') as user:
+            data = json.load(user)
+            result = setup.create_api_call('POST', '/api/users', headers=headers, data=json.dumps(data))
+            print(f'{user.name} {result.content}')
 
-        result = setup.create_api_call('POST', '/api/users', headers=headers, data=json.dumps(data))
+    async def step_8_create_dashboard(self):
+        headers = {"Content-Type": "application/json",
+                   "Authorization": f"Bearer {await _retrieve_api_key()}"}
+        data = {"description": "OBS_All demo dashboard",
+                "name": "OBS_All Demo"}
 
+        result = setup.create_api_call('POST', f'/api/v1/{self._OBS_Test_project_name}/dashboard', headers=headers, data=json.dumps(data))
+        self._OBS_DashBoard_id = json.loads(result.content.decode('utf-8'))['id']
         print(result.content)
 
+    async def step_9_create_filters(self):
+        # TODO: Add system test filter
+        headers = {"Content-Type": "application/json",
+                   "Authorization": f"Bearer {await _retrieve_api_key()}"}
+
+        with open('provisioning/dashboards/filters/demo_filter.json') as filter:
+            data = json.load(filter)
+            result = setup.create_api_call('POST', f'/api/v1/{self._OBS_Test_project_name}/filter', headers=headers, data=json.dumps(data))
+            print(f'{filter.name} {result.content}')
+
+        with open('provisioning/dashboards/filters/python_unit_test_filter.json') as filter:
+            data = json.load(filter)
+            result = setup.create_api_call('POST', f'/api/v1/{self._OBS_Test_project_name}/filter', headers=headers, data=json.dumps(data))
+            print(f'{filter.name} {result.content}')
+
+        with open('provisioning/dashboards/filters/ctest_filter.json') as filter:
+            data = json.load(filter)
+            result = setup.create_api_call('POST', f'/api/v1/{self._OBS_Test_project_name}/filter', headers=headers, data=json.dumps(data))
+            print(f'{filter.name} {result.content}')
+
+    async def step_10_create_widget(self):
+        headers = {"Content-Type": "application/json",
+                   "Authorization": f"Bearer {await _retrieve_api_key()}"}
+        with open('provisioning/dashboards/widgets/launch_statistics.json') as widget:
+            data = json.load(widget)
+            result = setup.create_api_call('POST', f'/api/v1/{self._OBS_Test_project_name}/widget', headers=headers, data=json.dumps(data))
+            self._widget_ids.append(json.loads(result.content.decode('utf-8'))['id'])
+            print(f'{widget.name} {result.content}')
+
+    async def step_11_add_widgets(self):
+        headers = {"Content-Type": "application/json",
+                   "Authorization": f"Bearer {await _retrieve_api_key()}"}
+        with open('provisioning/dashboards/widgets/add_to_dashboard.json') as add_widget:
+            data = json.load(add_widget)
+            data['addWidget']['widgetId'] = self._widget_ids[0]
+            result = setup.create_api_call('PUT', f'/api/v1/{self._OBS_Test_project_name}/dashboard/{self._OBS_DashBoard_id}/add', headers=headers, data=json.dumps(data))
+            print(f'{add_widget.name} {result.content}')
+
     async def main(self):
-        self.step_1_copy_required_files()
-        self.step_2_install_docker_compose()
-        self.step_3_pull_report_portal_image()
-        self.step_4_start_report_portal_stack()
-        await self.step_5_create_OBS_test_project()
-        await self.step_6_create_qcify_user()
+        # self.step_1_copy_required_files()
+        # self.step_2_install_docker_compose()
+        # self.step_3_pull_report_portal_image()
+        # self.step_4_start_report_portal_stack()
+        # await self.step_5_wait_for_stack_to_be_online()
+        await self.step_6_create_OBS_test_project()
+        await self.step_7_create_qcify_user()
+        await self.step_8_create_dashboard()
+        await self.step_9_create_filters()
+        await self.step_10_create_widget()
+        await self.step_11_add_widgets()
 
 
 if __name__ == '__main__':

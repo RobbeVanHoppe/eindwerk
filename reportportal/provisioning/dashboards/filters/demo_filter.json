@@ -1,0 +1,21 @@
+{
+    "name": "demo_filter",
+    "type": "launch",
+    "conditions": [
+        {
+            "filteringField": "name",
+            "value": "demo",
+            "condition": "cnt"
+        }
+    ],
+    "orders": [
+        {
+            "sortingColumn": "startTime",
+            "isAsc": "false"
+        },
+        {
+            "sortingColumn": "number",
+            "isAsc": "false"
+        }
+    ]
+}

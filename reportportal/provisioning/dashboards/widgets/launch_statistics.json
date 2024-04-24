@@ -1,0 +1,38 @@
+{
+    "widgetType": "statisticTrend",
+    "contentParameters": {
+        "contentFields": [
+            "statistics$executions$total",
+            "statistics$executions$passed",
+            "statistics$executions$failed",
+            "statistics$executions$skipped",
+            "statistics$defects$product_bug$total",
+            "statistics$defects$product_bug$pb001",
+            "statistics$defects$automation_bug$total",
+            "statistics$defects$automation_bug$ab001",
+            "statistics$defects$system_issue$total",
+            "statistics$defects$system_issue$si001",
+            "statistics$defects$no_defect$total",
+            "statistics$defects$no_defect$nd001",
+            "statistics$defects$to_investigate$total",
+            "statistics$defects$to_investigate$ti001"
+        ],
+        "itemsCount": "50",
+        "widgetOptions": {
+            "zoom": false,
+            "timeline": "launch",
+            "viewMode": "area-spline"
+        }
+    },
+    "filters": [
+        {
+            "value": "3",
+            "name": "demo_widgets"
+        }
+    ],
+    "name": "launch_statistics_demo",
+    "description": "",
+    "filterIds": [
+        "3"
+    ]
+}

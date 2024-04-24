@@ -1,0 +1,21 @@
+{
+    "name": "ctest_filter",
+    "type": "launch",
+    "conditions": [
+        {
+            "filteringField": "name",
+            "value": "ctest",
+            "condition": "cnt"
+        }
+    ],
+    "orders": [
+        {
+            "sortingColumn": "startTime",
+            "isAsc": "false"
+        },
+        {
+            "sortingColumn": "number",
+            "isAsc": "false"
+        }
+    ]
+}

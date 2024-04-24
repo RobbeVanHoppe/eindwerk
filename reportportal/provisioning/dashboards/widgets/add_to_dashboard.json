@@ -1,0 +1,16 @@
+{
+    "addWidget": {
+        "widgetId": 0,
+        "widgetName": "Launch Statistics",
+        "widgetOptions": {},
+        "widgetPosition": {
+            "positionX": 0,
+            "positionY": 0
+        },
+        "widgetSize": {
+            "height": 7,
+            "width": 6
+        },
+        "widgetType": "Launch_Statistics_chart"
+    }
+}

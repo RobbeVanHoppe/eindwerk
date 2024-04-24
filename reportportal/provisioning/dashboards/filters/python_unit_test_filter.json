@@ -1,0 +1,21 @@
+{
+    "name": "python_unit_test_filter",
+    "type": "launch",
+    "conditions": [
+        {
+            "filteringField": "name",
+            "value": "python_unit_test",
+            "condition": "cnt"
+        }
+    ],
+    "orders": [
+        {
+            "sortingColumn": "startTime",
+            "isAsc": "false"
+        },
+        {
+            "sortingColumn": "number",
+            "isAsc": "false"
+        }
+    ]
+}
