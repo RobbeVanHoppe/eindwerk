@@ -132,10 +132,10 @@ class SetupReportPortal:
         print(setup.execute_ssh_command(f'docker compose -f {setup.remote_home}/reportportal/provisioning/docker-compose.yml up -d'))
 
     async def step_5_wait_for_stack_to_be_online(self):
-        while setup.create_api_call('GET', '/api/v1/settings').status_code != 400:
-            print("Waiting for stack to be ready")
-            await sleep(5)
-
+        # while setup.create_api_call('GET', '/api/v1/settings').status_code != 400:
+        print("Waiting for stack to be ready")
+        #     await sleep(5)
+        sleep(30)
     async def step_6_create_OBS_test_project(self):
         headers = {"Content-Type": "application/json",
                    "Authorization": f"Bearer {await _retrieve_api_key()}"}
