@@ -10,9 +10,32 @@ import requests
 
 
 class SetupReportPortal:
-    def __init__(self, remote_host_ip: str = None):
-        self._ssh_client = None
-        self._remote_host = '192.168.116.108' if remote_host_ip is None else remote_host_ip
+    """
+    Represents a setup for interacting with ReportPortal.
+
+    Methods:
+        __init__: Initialize the setup with optional remote host IP.
+        _create_client: Create an SSH client for the remote host.
+        _close_client: Close the SSH client connection.
+        _retrieve_api_key: Retrieve the API key for authentication.
+        execute_ssh_command: Execute an SSH command on the remote host.
+        copy_folder: Copy a folder to the remote host.
+        copy_file: Copy a file to the remote host.
+        create_api_call: Make an API call to the remote host.
+        step_1_copy_required_files: Copy required files and SSH key.
+        step_2_install_docker_compose: Install Docker Compose.
+        step_3_pull_report_portal_image: Pull the ReportPortal Docker image.
+        step_4_start_report_portal_stack: Start the ReportPortal stack.
+        step_5_create_OBS_test_project: Create a test project.
+        step_6_create_qcify_user: Create a user for QCify.
+        step_7_assign_user_to_project: Assign a user to a project.
+        main: Execute the setup steps in sequence.
+    """
+
+    
+    def __init__(self, remote_host_ip: Optional[str] = None):
+        self._ssh_client: Optional[paramiko.SSHClient] = None
+        self._remote_host = '10.10.0.10' if remote_host_ip is None else remote_host_ip
         self._remote_user = 'qcify'
         self._remote_password = 'Qc1fyT3st'
         self.remote_home = f'/home/{self._remote_user}'
@@ -21,7 +44,7 @@ class SetupReportPortal:
         self.host_rsa_priv_key = f'{self.host_home}/.ssh/id_rsa'
         self.host_reportportal_dir = f'{self.host_home}/qcify/test_dashboard/reportportal'
 
-    def _create_client(self, user: str = None, password: str = None) -> None:
+    def _create_client(self, user: Optional[str] = None, password: Optional[str] = None) -> None:
         self._ssh_client = paramiko.SSHClient()
         self._ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
@@ -31,7 +54,7 @@ class SetupReportPortal:
             self._ssh_client.connect(hostname=self._remote_host, username=self._remote_user, key_filename=self.host_rsa_priv_key)
 
     def _close_client(self):
-        self._ssh_client.close()
+        self._ssh_client.close() # type: ignore
 
     async def _retrieve_api_key(self) -> str:
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
@@ -42,17 +65,16 @@ class SetupReportPortal:
         result = setup.create_api_call('POST', '/uat/sso/oauth/token', headers=headers, data=data, auth=auth)
         return result.json().get('access_token')
 
-    def execute_ssh_command(self, command: str, user: str = None, password: str = None) -> str:
+    def execute_ssh_command(self, command: str, user: Optional[str] = None, password: Optional[str] = None) -> str:
         self._create_client(user=user, password=password)
         full_cmd = command
 
-        if command.startswith("sudo"):
-            # Prompt for password securely
+        if command.startswith("sudo") and not self._remote_password:
             self._remote_password = getpass.getpass(prompt="Enter remote sudo password: ")
             # Add -S option to sudo command and pass the password through stdin
             full_cmd = f'echo "{self._remote_password}" | sudo -S {command}'
 
-        stdin, stdout, stderr = self._ssh_client.exec_command(full_cmd)
+        stdin, stdout, stderr = self._ssh_client.exec_command(full_cmd) # type: ignore
         exit_status: int = stdout.channel.recv_exit_status()
         output: str = stdout.read().decode('utf-8')
         error: str = stderr.read().decode('utf-8')
@@ -65,17 +87,22 @@ class SetupReportPortal:
                 f'Error: {error or newline}\n')
 
     def copy_folder(self, src_folder: str, dst_folder: str):
-        self.execute_ssh_command("mkdir -p " + dst_folder, user=self._remote_user, password=self._remote_password)
+        self.execute_ssh_command(
+            f"mkdir -p {dst_folder}",
+            user=self._remote_user,
+            password=self._remote_password,
+        )
         print(subprocess.run(['scp', '-r', src_folder, f'{self._remote_user}@{self._remote_host}:{dst_folder}']))
 
     def copy_file(self, src_file: str, dst_file: str):
         print(subprocess.run(['scp', '-r', src_file, f'{self._remote_user}@{self._remote_host}:{dst_file}']))
 
-    def create_api_call(self, method: str, url: str, headers: dict[str, str], data: Union[str, dict[str, str]], auth: tuple[str, str] = None) -> Optional[requests.Response]:
+    def create_api_call(self, method: str, url: str, headers: dict[str, str], data: Union[str, dict[str, str]], auth: Optional[tuple[str, str]] = None) -> requests.Response:
         if method == 'POST':
             return requests.post(url=f'http://{self._remote_host}:8080{url}', headers=headers, data=data, auth=auth)
         if method == 'PUT':
             return requests.put(url=f'http://{self._remote_host}:8080{url}', headers=headers, data=data, auth=auth)
+        return requests.Response()
 
     def step_1_copy_required_files(self):
         """
@@ -118,7 +145,7 @@ class SetupReportPortal:
             "projectName": "OBS_test"
         }
         result = setup.create_api_call('POST', '/api/v1/project', headers=headers, data=json.dumps(data))
-        print(result)
+        print(result.content)
 
     async def step_6_create_qcify_user(self):
         headers = {"Content-Type": "application/json",
@@ -129,20 +156,11 @@ class SetupReportPortal:
                 "fullName": "qcify",
                 "login": "qcify",
                 "password": "qcify",
-                "projectRole": "PROJECT MANAGER"}
+                "projectRole": "PROJECT_MANAGER"}
 
         result = setup.create_api_call('POST', '/api/users', headers=headers, data=json.dumps(data))
 
-        print(result)
-
-    async def step_7_assign_user_to_project(self):
-        headers = {"Content-Type": "application/json",
-                   "Authorization": f"Bearer {await self._retrieve_api_key()}"}
-        data = {"userNames": {"qcify": "PROJECT_MANAGER"}}
-
-        result = setup.create_api_call('PUT', '/api/v1/project/OBS_test/assign', headers=headers, data=json.dumps(data))
-
-        print(result)
+        print(result.content)
 
     async def main(self):
         self.step_1_copy_required_files()
@@ -151,7 +169,6 @@ class SetupReportPortal:
         self.step_4_start_report_portal_stack()
         await self.step_5_create_OBS_test_project()
         await self.step_6_create_qcify_user()
-        await self.step_7_assign_user_to_project()
 
 
 if __name__ == '__main__':
