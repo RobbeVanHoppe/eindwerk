@@ -32,7 +32,7 @@ class SetupReportPortal:
         self._OBS_DashBoard_id: Optional[str] = None
         self._OBS_Test_project_name: str = "OBS_Test"
         self._ssh_client: Optional[paramiko.SSHClient] = None
-        self._remote_host = '10.10.0.10' if remote_host_ip is None else remote_host_ip
+        self._remote_host = remote_host_ip or '127.0.0.1'
         self._remote_user = 'qcify'
         self._remote_password = 'Qc1fyT3st'
         self.remote_home = f'/home/{self._remote_user}'

@@ -10,16 +10,16 @@ def test_one(rp_logger):
     assert 'h' in x
 
     # Message with an attachment.
-    import subprocess
-    free_memory = subprocess.check_output("free -h".split())
-    rp_logger.info(
-        "Case1. Memory consumption",
-        attachment={
-            "name": "free_memory.txt",
-            "data": free_memory,
-            "mime": "application/octet-stream",
-        },
-    )
+    # import subprocess
+    # free_memory = subprocess.check_output("free -h".split())
+    # rp_logger.info(
+    #     "Case1. Memory consumption",
+    #     attachment={
+    #         "name": "free_memory.txt",
+    #         "data": free_memory,
+    #         "mime": "application/octet-stream",
+    #     },
+    # )
 
     # This debug message will not be sent to the ReportPortal.
     rp_logger.debug("Case1. Debug message")
