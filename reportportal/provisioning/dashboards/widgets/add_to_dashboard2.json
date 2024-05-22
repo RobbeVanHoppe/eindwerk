@@ -1,0 +1,16 @@
+{
+    "addWidget": {
+        "widgetId": 1,
+        "widgetName": "Time Consumption",
+        "widgetOptions": {},
+        "widgetPosition": {
+            "positionX": 7,
+            "positionY": 0
+        },
+        "widgetSize": {
+            "height": 7,
+            "width": 6
+        },
+        "widgetType": "mostTimeConsuming"
+    }
+}

@@ -1,0 +1,20 @@
+{
+    "widgetType":"mostTimeConsuming",
+    "contentParameters":
+    {
+        "contentFields":[
+            "statistics$executions$passed",
+            "statistics$executions$failed"
+        ],
+            "itemsCount":1,
+            "widgetOptions":{
+                "viewMode":"bar",
+                "includeMethods":false,
+                "launchNameFilter":"python_unit_test"
+                }
+                },
+                "filters":[],
+                "name":"time_consumption",
+                "description":"",
+                "filterIds":[]
+            }

@@ -4,6 +4,7 @@ import json
 import os
 import subprocess
 from asyncio import sleep
+import sys
 from typing import List, Optional, Union
 
 import paramiko
@@ -27,12 +28,12 @@ class SetupReportPortal:
     After installation, we provision reportportal with a qcify user and OBS_Test dashboard.
     """
 
-    def __init__(self, remote_host_ip: Optional[str] = None):
+    def __init__(self):
         self._widget_ids: List[int] = []
         self._OBS_DashBoard_id: Optional[str] = None
         self._OBS_Test_project_name: str = "OBS_Test"
         self._ssh_client: Optional[paramiko.SSHClient] = None
-        self._remote_host = remote_host_ip or '127.0.0.1'
+        self._remote_host = '127.0.0.1' # sys.argv[0] or '127.0.0.1'  
         self._remote_user = 'qcify'
         self._remote_password = 'Qc1fyT3st'
         self.remote_home = f'/home/{self._remote_user}'
@@ -135,7 +136,7 @@ class SetupReportPortal:
         # while setup.create_api_call('GET', '/api/v1/settings').status_code != 400:
         print("Waiting for stack to be ready")
         #     await sleep(5)
-        sleep(30)
+        await sleep(30)
     async def step_6_create_OBS_test_project(self):
         headers = {"Content-Type": "application/json",
                    "Authorization": f"Bearer {await _retrieve_api_key()}"}
@@ -149,7 +150,7 @@ class SetupReportPortal:
     async def step_7_create_qcify_user(self):
         headers = {"Content-Type": "application/json",
                    "Authorization": f"Bearer {await _retrieve_api_key()}"}
-        with open('provisioning/users/qcify_user.json') as user:
+        with open(f'{os.getcwd()}/provisioning/users/qcify_user.json') as user:
             data = json.load(user)
             result = setup.create_api_call('POST', '/api/users', headers=headers, data=json.dumps(data))
             print(f'{user.name} {result.content}')
@@ -161,25 +162,25 @@ class SetupReportPortal:
                 "name": "OBS_All Demo"}
 
         result = setup.create_api_call('POST', f'/api/v1/{self._OBS_Test_project_name}/dashboard', headers=headers, data=json.dumps(data))
-        self._OBS_DashBoard_id = json.loads(result.content.decode('utf-8'))['id']
         print(result.content)
+        self._OBS_DashBoard_id = json.loads(result.content.decode('utf-8'))['id']
 
     async def step_9_create_filters(self):
         # TODO: Add system test filter
         headers = {"Content-Type": "application/json",
                    "Authorization": f"Bearer {await _retrieve_api_key()}"}
 
-        with open('provisioning/dashboards/filters/demo_filter.json') as filter:
+        with open(f'{os.getcwd()}/provisioning/dashboards/filters/demo_filter.json') as filter:
             data = json.load(filter)
             result = setup.create_api_call('POST', f'/api/v1/{self._OBS_Test_project_name}/filter', headers=headers, data=json.dumps(data))
             print(f'{filter.name} {result.content}')
 
-        with open('provisioning/dashboards/filters/python_unit_test_filter.json') as filter:
+        with open(f'{os.getcwd()}/provisioning/dashboards/filters/python_unit_test_filter.json') as filter:
             data = json.load(filter)
             result = setup.create_api_call('POST', f'/api/v1/{self._OBS_Test_project_name}/filter', headers=headers, data=json.dumps(data))
             print(f'{filter.name} {result.content}')
 
-        with open('provisioning/dashboards/filters/ctest_filter.json') as filter:
+        with open(f'{os.getcwd()}/provisioning/dashboards/filters/ctest_filter.json') as filter:
             data = json.load(filter)
             result = setup.create_api_call('POST', f'/api/v1/{self._OBS_Test_project_name}/filter', headers=headers, data=json.dumps(data))
             print(f'{filter.name} {result.content}')
@@ -187,7 +188,13 @@ class SetupReportPortal:
     async def step_10_create_widget(self):
         headers = {"Content-Type": "application/json",
                    "Authorization": f"Bearer {await _retrieve_api_key()}"}
-        with open('provisioning/dashboards/widgets/launch_statistics.json') as widget:
+        with open(f'{os.getcwd()}/provisioning/dashboards/widgets/launch_statistics.json') as widget:
+            data = json.load(widget)
+            result = setup.create_api_call('POST', f'/api/v1/{self._OBS_Test_project_name}/widget', headers=headers, data=json.dumps(data))
+            self._widget_ids.append(json.loads(result.content.decode('utf-8'))['id'])
+            print(f'{widget.name} {result.content}')
+
+        with open(f'{os.getcwd()}/provisioning/dashboards/widgets/time_consumption.json') as widget:
             data = json.load(widget)
             result = setup.create_api_call('POST', f'/api/v1/{self._OBS_Test_project_name}/widget', headers=headers, data=json.dumps(data))
             self._widget_ids.append(json.loads(result.content.decode('utf-8'))['id'])
@@ -196,24 +203,26 @@ class SetupReportPortal:
     async def step_11_add_widgets(self):
         headers = {"Content-Type": "application/json",
                    "Authorization": f"Bearer {await _retrieve_api_key()}"}
-        with open('provisioning/dashboards/widgets/add_to_dashboard.json') as add_widget:
+        with open(f'{os.getcwd()}/provisioning/dashboards/widgets/add_to_dashboard.json') as add_widget:
             data = json.load(add_widget)
             data['addWidget']['widgetId'] = self._widget_ids[0]
             result = setup.create_api_call('PUT', f'/api/v1/{self._OBS_Test_project_name}/dashboard/{self._OBS_DashBoard_id}/add', headers=headers, data=json.dumps(data))
             print(f'{add_widget.name} {result.content}')
-
+            
+        
     async def main(self):
         # self.step_1_copy_required_files()
         # self.step_2_install_docker_compose()
         # self.step_3_pull_report_portal_image()
         # self.step_4_start_report_portal_stack()
         # await self.step_5_wait_for_stack_to_be_online()
-        await self.step_6_create_OBS_test_project()
-        await self.step_7_create_qcify_user()
+        # await self.step_6_create_OBS_test_project()
+        # await self.step_7_create_qcify_user()
         await self.step_8_create_dashboard()
         await self.step_9_create_filters()
         await self.step_10_create_widget()
         await self.step_11_add_widgets()
+        # print( await _retrieve_api_key())
 
 
 if __name__ == '__main__':
