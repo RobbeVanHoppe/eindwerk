@@ -4,7 +4,7 @@
 cmake-build-*/
 .idea/
 .vscode/
-
+Testing/
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
