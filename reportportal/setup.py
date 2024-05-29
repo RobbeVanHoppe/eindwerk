@@ -209,6 +209,14 @@ class SetupReportPortal:
             result = setup.create_api_call('PUT', f'/api/v1/{self._OBS_Test_project_name}/dashboard/{self._OBS_DashBoard_id}/add', headers=headers, data=json.dumps(data))
             print(f'{add_widget.name} {result.content}')
             
+    async def step_12_get_qcify_user_key(self) -> str:
+        qcify_user_id = 3 # TODO: Get the qcify user id via the API
+        
+        headers = {"Content-Type": "application/json",
+                   "Authorization": f"Bearer {await _retrieve_api_key()}"}
+        result = setup.create_api_call('GET', f'/api/users/{qcify_user_id}/api-keys', headers=headers)
+        api_key = json.loads(result.content.decode('utf-8'))
+        return api_key
         
     async def main(self):
         # self.step_1_copy_required_files()
@@ -218,11 +226,12 @@ class SetupReportPortal:
         # await self.step_5_wait_for_stack_to_be_online()
         # await self.step_6_create_OBS_test_project()
         # await self.step_7_create_qcify_user()
-        await self.step_8_create_dashboard()
-        await self.step_9_create_filters()
-        await self.step_10_create_widget()
-        await self.step_11_add_widgets()
+        # await self.step_8_create_dashboard()
+        # await self.step_9_create_filters()
+        # await self.step_10_create_widget()
+        # await self.step_11_add_widgets()
         # print( await _retrieve_api_key())
+        print( await self.step_12_get_qcify_user_key())
 
 
 if __name__ == '__main__':
