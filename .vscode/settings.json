@@ -1,6 +1,0 @@
-{
-    "ansible.python.interpreterPath": "/home/robbe/qcify/test_dashboard/.venv/bin/python3.9",
-    "python.analysis.typeCheckingMode": "basic",
-    "wolf.disableHotModeWarning": true,
-    "cmake.sourceDirectory": "/home/robbe/qcify/test_dashboard/reportportal-agent-googletest"
-}
