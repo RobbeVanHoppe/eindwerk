@@ -52,3 +52,7 @@ The API key for uploading test results needs to be hardcoded in the pytest.ini f
 changed to a more secure method.
 The same goes for the CTest uploader script. I have tried writing a GET for the keys of the user, but I failed to get
 that working in time.
+
+There is also the option to add integration with Azure, more details can be found in this guide:
+
+https://reportportal.io/docs/plugins/AzureDevOpsBTS
